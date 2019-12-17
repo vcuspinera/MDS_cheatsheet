@@ -1,0 +1,409 @@
+---
+title: "Untitled"
+output: html_document
+---
+
+```{r libraries, echo = FALSE}
+library(tidyverse)
+library(stringr)
+library(gapminder)
+library(magrittr)
+```
+
+# Lecture 1: Welcome to the tidyverse  
+
+#### read_csv  
+Use `readr::read_csv` to bring data from standard comma separated value (.csv) files into R:  
+wine_1 <- read_csv("data/wine_1.csv")   # <--- tidy documento in csv  
+wine_2 <- read_csv("data/wine_2.csv", skip = 1) # <--- in csv, jump first row  
+wine_3 <- read_csv("data/wine_3.csv", n_max = 5) # <--- csv, put a max number of columns  
+wine_4 <- read_delim("data/wine_4.txt", delim = "\t") # <--- txt file, delimited by tabs  
+wine_5 <- read_csv("data/wine_5.csv", col_types = list("Add more columns" = "-")) # <--- csv, change the name of columns to "-" to be erased  
+wine_6 <- read_delim("data/wine_6.txt", delim = "\t",  skip = 1,  col_types = list("C" = "-", "X10"= "-", "R" = "-"),  col_names = TRUE,  n_max = 5)  
+wine_7 <- read_excel("data/wine_7.xlsx") # <--- excel   
+wine_8 <- read_excel("data/wine_8.xlsx", sheet = "DATA") # <--- excel in a specific spreadsheet  
+  
+  
+#### What is `tidy data`?
+A tidy data is one that is satified by these three criteria:  
+- each row is a single observation,  
+- each variable is a single column, and  
+- each value is a single cell (i.e., its row, column position in the data frame is not shared with another value)  
+*What is a variable and an observation may depend on your immediate goal.*  
+  
+Five most common problems with messy datasets, along with their remedies:  
+• Column headers are values, not variable names.  
+• Multiple variables are stored in one column.  
+• Variables are stored in both rows and columns.  
+• Multiple types of observational units are stored in the same table. • A single observational unit is stored in multiple tables.  
+  
+#### Advantages and disadvantages of the tidy data format  
+Tidy data is only worthwhile if it makes analysis easier.
+
+#### gather and spread
+gather(data, key = xxx, value = yyyy, `t1`:`t9`) #columns t1 to t9
+gather(data, key = xxx, value = yyyy, -CountryName) #all columns exept the last one
+- key: the name of a new column that will be created, whose values will come from the names of the columns that we want to combine.
+- values: the name of a new column that will be created, whose values will come from the values of the columns we want to combine.
+- names of the columns that we want to combine.
+
+
+spread(data, key = xxx, value = yyyy)
+- key: the name of the column whose values we would like to use as column names when we spread the data.
+- value: the name of the column whose values you would like to spread into separate columns.
+
+
+#### select: Use select to subset the data on variables or columns.
+select(gapminder, year, lifeExp)
+
+#### filter: takes logical expressions and returns the rows for which all are TRUE.
+filter(gapminder, lifeExp < 29)
+filter(gapminder, country == "Rwanda", year > 1979)
+filter(gapminder, lifeExp > 80 | year == 2007)
+filter(gapminder, country `%in%` c("Rwanda", "Afghanistan"))
+
+#### mutate: to add new variables, or change a column in place
+mutate(tidy_unicef, year = as.numeric(sub("U5MR ", "", year)))
+gapminder  %>%  mutate(gdp = pop * gdpPercap) 
+gapminder  %>%  mutate(gdp = pop * gdpPercap,  pop_thousands = pop / 1000)
+gapminder  %>%  mutate(lifeExp = round(lifeExp, 0))
+
+#### %in%: to filter for multiple elements in a column
+filter(gapminder, country `%in%` c("Rwanda", "Afghanistan"))
+
+#### str: see the structure of the data
+str(gapminder)
+
+#### pipe operator, %>%
+The pipe operator takes the thing on the left-hand-side and pipes it into the function call on the right-hand-side – literally, drops it in as the first argument.
+gapminder  %>%  filter(country == "Cambodia")  %>%  select(year, lifeExp)
+
+
+
+# Lecture 2: Common data manipulations & reading data into R
+
+**Note: if a variable is a factor, we can't manipulate them. So, we need to change these to character vectors so we can manipulate the character values they hold:**
+gap <- gapminder %>% 
+   mutate(country = as.character(country),
+   continent = as.character(continent))
+  
+#### readr::read_* 
+See lecture 1, first part.  
+  
+#### if_else & case_when
+
+
+#filter(gapminder, country == "Cambodia")
+gapminder %>%  mutate(country = if_else(country == "Cambodia",  "Kingdom of Cambodia", country))
+  
+gap <- gap  %>%  mutate(country = if_else(country == "Cambodia",  "Kingdom of Cambodia",  country))
+  
+  
+#### create a tribble
+```{r create }
+fix_me <- tibble::tribble(
+  ~province,             ~cities,
+  "BC",                  "Victoria",
+  "Alberta",             "Edmonton",
+  "SK",                  "Regina",
+  "British Columbia",    "Vancouver",
+  "Alberta",             "Calgary",
+  "BC",                  "Kelowna",
+  "AB",                  "Lethbridge",
+  "SK",                  "Saskatoon"
+)
+fix_me
+```
+
+#### removing rows with NA
+df %>% drop_na() # <--- from all the tibble  
+df %>% drop_na(y) #<--- from only the y variable  
+  
+#### factors
+explore with: str(gapminder$continent)  
+> Factor w/ 5 levels "Africa","Americas",..  
+  
+levels(gapminder$continent)  
+>'Africa'  
+'Americas'  
+'Asia'  
+'Europe'  
+'Oceania'  
+  
+nlevels(gapminder$continent)  
+>5
+  
+class(gapminder$continent)  
+>'factor'  
+  
+####Dropping unused levels  
+h_countries <- gapminder %>%   
+filter(country %in% c("Egypt", "Haiti", "Romania", "Thailand", "Venezuela"))  
+  
+h_countries$country %>%  
+fct_drop() %>%  
+nlevels
+  
+#### Change order of the levels, principled¶
+By default, factor levels are ordered alphabetically.  
+Change by Frequency (use: `fct_infreq`):  
+```{r}
+gapminder$continent %>% 
+    fct_infreq() %>% 
+    levels()
+```
+  
+Change by reverese frequency (use: `fct_rev`):  
+```{r}
+gapminder$continent %>% 
+  fct_infreq() %>%
+  fct_rev() %>% 
+  levels()
+```
+  
+#### Order one variable by another (reorder)
+```{r}
+## order accoring to max life exp instead of median
+fct_reorder(gapminder$country, gapminder$lifeExp, min) %>% 
+    levels() %>% 
+    head()
+```
+
+
+#### Loading/importing data¶
+  
+#### Cleaning up column names¶
+library(janitor)  
+clean_names(census)  
+  
+One of the first things you want to do when you read in data can be to clean these up!  
+  
+If things are not too bad, and there are not too many, `rename` can be a friend.  
+```{r}
+# rename column names
+gapminder %>% 
+    rename(life_exp = lifeExp,
+          gdp_percap = gdpPercap) %>% 
+    head()
+```
+  
+Cleaning up a lot of column names: Sometimes there are A LOT of column names with non-syntactic names. rename is not the best choice here. Instead we'll use the `clean_names` from the janitor package to transform all column names to syntactic ones. 
+```{r}
+library(janitor)
+#census <- read_csv("data/census_snippet.csv")
+#head(census)
+gapminder
+clean_names(gapminder) %>% head()
+```
+
+
+# Lecture 3 - Strings, dates & times, as well as group_by + summarise for iteration
+
+#### String manipulation
+Cheatsheet: https://stringr.tidyverse.org  
+  
+Compare if the string has some text:  
+`str_detect`(fruit, "fruit")  
+  
+Return only the strings that cointain the text:  
+`str_subset`(fruit, "fruit")  
+  
+Split the words string in a list separating the strings that are separated by " ".  
+`str_split`(my_fruit, " ")  
+  
+and this split separate the string in a fixed number of columns.:
+`str_split_fixed`(my_fruit, pattern = " ", n = 2)  
+  
+iunsplit returns a data frame with the information  
+tibble(unsplit = my_fruit) %>%   
+separate(`unsplit`, into = c("pre", "post"), sep = " ")  
+
+get length of each string  
+`str_length`(my_fruit)  
+  
+remove first three characters  
+`str_sub`(my_fruit, 1, 3)  
+  
+collapse a character vector into one 
+head(fruit) %>% str_c(`collapse` = "-")
+
+replace fruit with vegetable  
+str_replace(my_fruit, "fruit", "vegetable"  
+  
+detect countries that start with "AL":
+gapminder %>%  
+filter(`str_detect`(country, "^Al")) %>%  
+pull(country)  %>%  unique()  %>%  length()
+  
+detect countries that end with "tan"
+gapminder  %>%  filter(str_detect(country, "tan$"))  
+  
+detect countries that contain ", Dem. Rep." 
+gapminder  %>%  filter(str_detect(country, "\\, Dem. Rep."))
+  
+replace ", Dem. Rep." with " Democratic Republic"
+gapminder %>% 
+  mutate(country = `str_replace`(country, "\\, Dem. Rep.", " Democratic Republic")) %>%
+  filter(country == "Korea Democratic Republic")
+  
+  
+### Summary of string manipulation functions covered so far:
+
+| function | description |
+|----------|-------------|
+| `str_detect` | Detects elements in a vector that match a pattern, returns a vector of logicals |
+| `srt_subset` | Detects and returns elements in a vector that match a pattern |
+| `str_split` | Split strings in a vector on a delimiter. Returns a list (used `str_split_fixed` to get a matrix) |
+| `separate` | Split character vectors from a data frame on a delimiter which get returned as additional columns in the data frame |
+| `str_length` | Counts the number of characters for each element of a character vector, and returns a numeric vector of the counts |
+| `str_sub` | Remove substrings based on character position |
+| `str_c` | Collapse and/or concatenate elements from a character vector(s) |
+| `unite` | Concatenate elements from character vectors from a data frame to create a single column |
+| `str_replace` | Replace a pattern in a vector of character vectors with a given string |
+| `str_extract` | Extract the actual text of a match from a character vector |
+| `str_match` | Use capture groups to extract parts of a complex match from a character vector, returns the match and the capture groups as columns of a matrix |
+  
+  
+#### dates and times using the lubridate package
+```{r}
+library(lubridate)  #ladi the package lubridate
+
+class(today()) #<--- 'Date'
+class(now()) #<--- POSIXct' 'POSIXt'
+
+ymd("2017-01-31")  
+mdy("January 31st, 2017")  
+dmy("31-Jan-2017")  
+ymd(20170131)  
+ymd_hms("2017-01-31 20:11:59")  
+mdy_hm("01/31/2017 08:01")  
+```
+
+If you have a data frame with dates separated by month year and day, you can uso:
+dates  %>%  mutate(date = `make_date`(year, month, day))
+  
+getting components:
+```{r}
+datetime <- now()
+datetime
+year(datetime)  
+month(datetime)  
+mday(datetime)  
+yday(datetime)  #day of the year
+wday(datetime, label = TRUE, abbr = FALSE)  #day of the week
+hour(datetime)
+minute(datetime)
+second(datetime)
+
+born <- dmy(30121982)
+age = today() - born
+paste("My age:", as.duration(age))
+```
+
+#### Iteration with group_by + summarise¶
+##### `summarise`
+calculates summaries over rows
+  
+##### Iteration with `group_by + summarise`
+Useful when you want to do something repeatedly to a group of rows  
+  
+Example:
+calculate the average life expectancy for each continent  
+gapminder %>%   
+    group_by(continent) %>%   #<---also I can use it for multiple columns: group_by(continent, year)  
+    summarise(mean_life_exp = mean(lifeExp))  
+  
+#### Grouped mutate
+If you don’t want to collapse the 'n' rows for each group into one row, but you want to keep your groups and compute within them:
+```{r}
+# calculate life expectancy gained (or lost) relative to 1952
+gapminder %>% 
+    group_by(continent) %>% 
+    mutate(life_exp_gain = lifeExp - first(lifeExp)) %>% 
+    head()
+```
+  
+  
+  #### A madeup example with the material, by Andres
+```{r students}
+UBC_students <- tibble::tribble(
+  ~Name, ~Argum, ~Stats, ~Wrang,
+  'Manuel',   92,  87,  90,
+  'Rob',     100, 100, 100,
+  'Vic',      94,  90,  78,
+  'Andres',   85,  70,  90
+)
+
+one_more <- c("Gigi", "Wrang", 94)
+
+UBC_students2 <- UBC_students %>% gather(key = class, value = grade, `Argum`:`Wrang`) %>% 
+  rbind(one_more) %>% 
+  mutate(random_num = rnorm(1, 0, 1))
+
+UBC_students2
+#UBC_students2 %>% spread(key = class, value = grade) select("Name", "Wrang", "Argum", "Stats", "random_num")
+```
+  
+  
+# Lecture 4 - Nested data frames and combinging data frames (binds and joins)
+  
+#### Nested data frames: `nest()`
+```{r}
+by_country <- gapminder %>% 
+group_by(continent, country) %>% 
+nest() %>% 
+head()
+print(by_country)
+```
+The data column is actually a list of data frames (or tibbles, to be precise). This seems like a crazy idea: we have a data frame with a column that is a list of other data frames!  
+  
+Difference between a standard grouped data frame and a nested data frame: in a grouped data frame, each row is an observation; in a nested data frame, each row is a group.  
+  
+Another way to think about a nested dataset is we now have a meta-observation: a row that represents the complete time course for a country, rather than a single point in time.
+  
+#### List-columns in data frames versus tibbles
+1. Create a list column using a function such as `nest` (other possibilities are `summarise` + `list`, or `mutate` + a `map_*` function, as described in [Creating list-columns](https://r4ds.had.co.nz/many-models.html#creating-list-columns))  
+2. Create other intermediate list-columns by transforming existing list columns with `map`, `map2` or `pmap`  
+3. Simplify the list-column back down to a data frame or atomic vector, often by `unnest`, `mutate` + `map_*` functions that return atomic vectors as opposed to lists.  
+  
+#####################
+
+test
+
+
+
+```{r}
+library(tidyverse)
+library(gapminder)
+
+gapminder %>% 
+  mutate(gapminder, gdp_total = pop * gdpPercap)
+str(gapminder)  
+
+```
+
+
+
+```{r}
+gapminder %>% 
+select(-year)
+
+grades_data <- read_csv("grades.csv", skip = 2, col_names = TRUE, )
+```
+
+
+
+
+
+```{r}
+gapminder %>% group_by(year) %>%
+  summarize(min_life_Exp = min(lifeExp))
+```
+
+
+
+```{r}
+gapminder %>% 
+  mutate(gapminder, gdp_total = pop * gdpPercap)
+
+```
