@@ -1,6 +1,6 @@
 # MDS_cheatsheet
 
-This repo belong to the MDS Latin Mafia, to share material, cheatsheet, ideas and projects, related to the 2019-2020 MDS-UBC in order to study and be suffesful in the programme.  
+This repo belong to the MDS Latin Mafia, to share material, cheatsheets, ideas and projects, related to the 2019-2020 MDS-UBC in order to study and be suffesful in the programme.  
 
 Casting:  
 [Robert Pimentel](https://github.com/robilizando) as *the Godfather / Pimentelli*.  
