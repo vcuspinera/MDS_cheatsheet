@@ -10,6 +10,6 @@ Casting:
 - [Manuel Maldonado](https://github.com/manu2856) as *Manu, the Trouble Maker*.  
 - [Victor Cuspinera](https://github.com/vcuspinera) as *the Chef and Economist*.   
   
-[imgs/latin_mafia_201911.png]
+![](imgs/latin_mafia_201911.png)
 
 Source: the MDS latin Mafia at Romert's, by Susy Pimentel.
