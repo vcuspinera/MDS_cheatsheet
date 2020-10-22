@@ -12,4 +12,4 @@ Casting:
   
 ![](imgs/latin_mafia_201911.png)
 
-Source: the MDS latin Mafia at Romert's, by Susy Pimentel.
+_Source: the MDS latin Mafia at Romert's, by Susy Pimentel._
